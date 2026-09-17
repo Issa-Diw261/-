@@ -1,8 +1,8 @@
 // ====================================================
-// لعبة تجاكيل عفوية - النسخة v.1.0 (عرض بطاقة الشخصية)
+// لعبة تجاكيل عفوية - النسخة v.1.0 (إدارة الشخصيات والأصوات)
 // ====================================================
 
-// --- محرك الصوت البرمجي (Web Audio API) ---
+// --- محرك الصوت البرمجي (Web Audio API) المتوافق مع الهواتف ---
 const AudioContext = window.AudioContext || window.webkitAudioContext;
 let audioCtx = null;
 let isMuted = localStorage.getItem("my_game_muted") === "true";
@@ -16,17 +16,24 @@ function initAudio() {
   }
 }
 
-// دالة تشغيل صوت الشخصية
+// تفعيل الصوت عند أول تفاعل لمس للمستخدم
+window.addEventListener("touchstart", initAudio, { once: true });
+window.addEventListener("click", initAudio, { once: true });
+
+// مشغل صوت الشخصيات الخارجي
 let currentCharacterAudio = null;
 function playCharacterVoice(voicePath) {
   if (isMuted || !voicePath) return;
   try {
+    initAudio();
     if (currentCharacterAudio) {
       currentCharacterAudio.pause();
       currentCharacterAudio.currentTime = 0;
     }
     currentCharacterAudio = new Audio(voicePath);
-    currentCharacterAudio.play().catch((e) => {});
+    currentCharacterAudio
+      .play()
+      .catch((e) => console.log("Audio playback prevented:", e));
   } catch (e) {}
 }
 
@@ -275,7 +282,7 @@ const characters = [
     avatarSrc: "laahadkanaker_avatar.png",
     runSrc: "laahadkanaker_run.png",
     voiceSrc: "",
-    desc: "هذه الشخصية المعلونة! البيدوفيلي عاشق القُصَّر ومن أكبر الfeetlovers ، يملك العزيمة والإصرار لكن ميوله المازوخي يردعه ",
+    desc: "هذه الشخصية المعلونة! البيدوفيلي عاشق القُصَّر ومن أكبر الfeetlovers ، يملك العزيمة والإصرار لكن ميوله المازوخي يردعه ",
   },
 ];
 
@@ -347,7 +354,7 @@ function showScreen(screen) {
   screen.classList.remove("hidden");
 }
 
-// دالة عامة لعرض نافذة معلومات الشخصية
+// عرض نافذة تفاصيل الشخصية
 function showCharacterInfoModal(char, isNewUnlock = false) {
   unlockModalImg.src = char.avatarSrc;
   unlockModalName.textContent = char.name;
@@ -420,7 +427,7 @@ document.getElementById("btn-pause-home").onclick = () => {
   showScreen(menuScreen);
 };
 
-// بناء المتجر: الضغط على أيقونة أي شخصية مملوكة يعرض معلوماتها
+// بناء المتجر
 function renderShop() {
   const grid = document.getElementById("characters-grid");
   grid.innerHTML = "";
@@ -444,7 +451,6 @@ function renderShop() {
       btnHtml = `<button class="game-btn btn-sm btn-green" onclick="buyChar('${char.id}')">شراء</button>`;
     }
 
-    // إضافة مؤشر النقر على الأيقونة للأشخاص المملوكين
     const avatarCursorStyle = char.unlocked
       ? 'style="cursor: pointer;" onclick="viewCharInfo(\'' + char.id + "')\""
       : "";
@@ -461,7 +467,6 @@ function renderShop() {
   });
 }
 
-// فتح بطاقة المعلومات عند النقر على الأيقونة للشخصية المملوكة
 window.viewCharInfo = function (id) {
   playClickSound();
   const char = characters.find((c) => c.id === id);
@@ -470,7 +475,6 @@ window.viewCharInfo = function (id) {
   }
 };
 
-// اختيار شخصية للعب
 window.selectChar = function (id) {
   playClickSound();
   const found = characters.find((c) => c.id === id);
@@ -487,7 +491,6 @@ window.selectChar = function (id) {
   }
 };
 
-// شراء شخصية جديدة (يعرض نافذة التهنئة لأول مرة)
 window.buyChar = function (id) {
   playClickSound();
   const char = characters.find((c) => c.id === id);
