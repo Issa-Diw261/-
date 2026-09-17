@@ -1,4 +1,201 @@
-// --- إدارة الشخصيات الست وصورها ---
+// ====================================================
+// لعبة تجاكيل عفوية - النسخة v.1.0 (عرض بطاقة الشخصية)
+// ====================================================
+
+// --- محرك الصوت البرمجي (Web Audio API) ---
+const AudioContext = window.AudioContext || window.webkitAudioContext;
+let audioCtx = null;
+let isMuted = localStorage.getItem("my_game_muted") === "true";
+
+function initAudio() {
+  if (!audioCtx) {
+    audioCtx = new AudioContext();
+  }
+  if (audioCtx.state === "suspended") {
+    audioCtx.resume();
+  }
+}
+
+// دالة تشغيل صوت الشخصية
+let currentCharacterAudio = null;
+function playCharacterVoice(voicePath) {
+  if (isMuted || !voicePath) return;
+  try {
+    if (currentCharacterAudio) {
+      currentCharacterAudio.pause();
+      currentCharacterAudio.currentTime = 0;
+    }
+    currentCharacterAudio = new Audio(voicePath);
+    currentCharacterAudio.play().catch((e) => {});
+  } catch (e) {}
+}
+
+const iconSoundOn = document.getElementById("icon-sound-on");
+const iconSoundOff = document.getElementById("icon-sound-off");
+
+function updateSoundButtonUI() {
+  if (isMuted) {
+    iconSoundOn.classList.add("hidden");
+    iconSoundOff.classList.remove("hidden");
+  } else {
+    iconSoundOn.classList.remove("hidden");
+    iconSoundOff.classList.add("hidden");
+  }
+}
+
+// موسيقى الخلفية الهادئة
+let bgmInterval = null;
+let currentBgmNoteIndex = 0;
+
+const bgmNotes = [
+  261.63, 329.63, 392.0, 523.25, 392.0, 329.63, 293.66, 349.23, 440.0, 349.23,
+  329.63, 261.63,
+];
+
+function playBgmTone(freq) {
+  try {
+    if (isMuted || !audioCtx || audioCtx.state !== "running") return;
+
+    const osc = audioCtx.createOscillator();
+    const gainNode = audioCtx.createGain();
+
+    osc.type = "sine";
+    const now = audioCtx.currentTime;
+
+    osc.frequency.setValueAtTime(freq, now);
+    gainNode.gain.setValueAtTime(0.035, now);
+    gainNode.gain.exponentialRampToValueAtTime(0.0005, now + 0.22);
+
+    osc.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+
+    osc.start(now);
+    osc.stop(now + 0.24);
+  } catch (e) {}
+}
+
+function startBGM() {
+  stopBGM();
+  if (isMuted) return;
+  initAudio();
+  currentBgmNoteIndex = 0;
+  bgmInterval = setInterval(() => {
+    if (isPlaying && !isPaused && !isCountingDown && !isMuted) {
+      playBgmTone(bgmNotes[currentBgmNoteIndex]);
+      currentBgmNoteIndex = (currentBgmNoteIndex + 1) % bgmNotes.length;
+    }
+  }, 230);
+}
+
+function stopBGM() {
+  if (bgmInterval) {
+    clearInterval(bgmInterval);
+    bgmInterval = null;
+  }
+}
+
+function playClickSound() {
+  try {
+    if (isMuted) return;
+    initAudio();
+    if (!audioCtx) return;
+
+    const osc = audioCtx.createOscillator();
+    const gainNode = audioCtx.createGain();
+
+    osc.type = "triangle";
+    const now = audioCtx.currentTime;
+
+    osc.frequency.setValueAtTime(600, now);
+    osc.frequency.exponentialRampToValueAtTime(220, now + 0.05);
+
+    gainNode.gain.setValueAtTime(0.2, now);
+    gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+
+    osc.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+
+    osc.start(now);
+    osc.stop(now + 0.06);
+  } catch (e) {}
+}
+
+function playCoinSound() {
+  try {
+    if (isMuted) return;
+    initAudio();
+    if (!audioCtx) return;
+
+    const osc = audioCtx.createOscillator();
+    const gainNode = audioCtx.createGain();
+
+    osc.type = "sine";
+    const now = audioCtx.currentTime;
+
+    osc.frequency.setValueAtTime(987.77, now);
+    osc.frequency.setValueAtTime(1318.51, now + 0.07);
+
+    gainNode.gain.setValueAtTime(0.2, now);
+    gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.32);
+
+    osc.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+
+    osc.start(now);
+    osc.stop(now + 0.35);
+  } catch (e) {}
+}
+
+function playGameOverSound() {
+  try {
+    if (isMuted) return;
+    initAudio();
+    if (!audioCtx) return;
+
+    const notes = [392.0, 329.63, 261.63, 196.0];
+    const now = audioCtx.currentTime;
+
+    notes.forEach((freq, index) => {
+      const osc = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+
+      osc.type = "sawtooth";
+      const noteTime = now + index * 0.12;
+
+      osc.frequency.setValueAtTime(freq, noteTime);
+      gainNode.gain.setValueAtTime(0.18, noteTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.001, noteTime + 0.2);
+
+      osc.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+
+      osc.start(noteTime);
+      osc.stop(noteTime + 0.22);
+    });
+  } catch (e) {}
+}
+
+// زر كتم الصوت
+document.getElementById("btn-toggle-sound").onclick = () => {
+  isMuted = !isMuted;
+  localStorage.setItem("my_game_muted", isMuted);
+  updateSoundButtonUI();
+
+  if (isMuted) {
+    stopBGM();
+    if (currentCharacterAudio) currentCharacterAudio.pause();
+    showToast("تم كتم الصوت 🔇");
+  } else {
+    playClickSound();
+    if (isPlaying && !isPaused && !isCountingDown) {
+      startBGM();
+    }
+    showToast("تم تشغيل الصوت 🔊");
+  }
+};
+updateSoundButtonUI();
+
+// --- إدارة الشخصيات ---
 const characters = [
   {
     id: "me",
@@ -7,6 +204,8 @@ const characters = [
     unlocked: true,
     avatarSrc: "my_avatar.png",
     runSrc: "player_run.png",
+    voiceSrc: "",
+    desc: "مؤسس اللعبة وقائد التجاكيل!",
   },
   {
     id: "hatlawi",
@@ -15,6 +214,8 @@ const characters = [
     unlocked: false,
     avatarSrc: "hatlawi_avatar.png",
     runSrc: "hatlawi_run.png",
+    voiceSrc: "hatlawi_voice.mp3",
+    desc: "الحطلاوي أو كما يعرف العبد الأسود، احذر منه عند دخول السيرفر! يوصف بكونه خبير الكلوز التكتيكي وصاحب أقوى ميمز تجكيلي.",
   },
   {
     id: "shaker",
@@ -23,6 +224,8 @@ const characters = [
     unlocked: false,
     avatarSrc: "shaker_avatar.png",
     runSrc: "shaker_run.png",
+    voiceSrc: "",
+    desc: "عمشاكر شخصياً، من لايعرف العمشاكر! حامل البيكيسي الخطير ويقال أنه يملك تجكيل لا نهائي!",
   },
   {
     id: "aboujej",
@@ -31,6 +234,8 @@ const characters = [
     unlocked: false,
     avatarSrc: "aboujej_avatar.png",
     runSrc: "aboujej_run.png",
+    voiceSrc: "",
+    desc: "أبوالجيج!! هنا سنصمت كثيراً حتى يكمل وضع قوانين جديدة للعادة السرية! فهو مؤسسها وصاحب أعلى رقم قياسي فيها",
   },
   {
     id: "divon",
@@ -39,6 +244,8 @@ const characters = [
     unlocked: false,
     avatarSrc: "divon_avatar.png",
     runSrc: "divon_run.png",
+    voiceSrc: "",
+    desc: "ديفون! مبتكر مفهوم الحجج ، وأسطورة في العادة بعد المؤسس الجيجي ، ومن انجازاته أنه لم يدخل فايت إلا وخسره -بسبب النت بالطبع-",
   },
   {
     id: "fais",
@@ -47,6 +254,28 @@ const characters = [
     unlocked: false,
     avatarSrc: "fais_avatar.png",
     runSrc: "fais_run.png",
+    voiceSrc: "",
+    desc: "فييص! لا أعرف من أين نبدأ ! أنس الصالج أو بوصفه زوج عمران أو بلقبه الحركي سفل داوود! إذا ذهبت إلى صالة كاونتر ستجده رسبن قبلك",
+  },
+  {
+    id: "anasamaka",
+    name: "أنا سمكة",
+    price: 150,
+    unlocked: false,
+    avatarSrc: "anasamaka_avatar.png",
+    runSrc: "anasamaka_run.png",
+    voiceSrc: "",
+    desc: "عاهر علاوي ! حفيد العنخ آمون شخصياً ويحكى أنه مازال ينتظر عزيمة من الهندريس بفارغ البطن",
+  },
+  {
+    id: "laahadkanaker",
+    name: "لاأحد كمشة كناكر",
+    price: 200,
+    unlocked: false,
+    avatarSrc: "laahadkanaker_avatar.png",
+    runSrc: "laahadkanaker_run.png",
+    voiceSrc: "",
+    desc: "هذه الشخصية المعلونة! البيدوفيلي عاشق القُصَّر ومن أكبر الfeetlovers ، يملك العزيمة والإصرار لكن ميوله المازوخي يردعه ",
   },
 ];
 
@@ -80,6 +309,12 @@ const gameOverScreen = document.getElementById("game-over-screen");
 const pauseModal = document.getElementById("pause-modal");
 const countdownOverlay = document.getElementById("countdown-overlay");
 const countdownNumber = document.getElementById("countdown-number");
+
+const unlockModal = document.getElementById("unlock-modal");
+const unlockModalImg = document.getElementById("unlock-modal-img");
+const unlockModalName = document.getElementById("unlock-modal-name");
+const unlockModalDesc = document.getElementById("unlock-modal-desc");
+const unlockSparkle = document.querySelector(".unlock-sparkle");
 const toast = document.getElementById("toast");
 
 const menuUCText = document.getElementById("menu-uc-count");
@@ -112,32 +347,80 @@ function showScreen(screen) {
   screen.classList.remove("hidden");
 }
 
+// دالة عامة لعرض نافذة معلومات الشخصية
+function showCharacterInfoModal(char, isNewUnlock = false) {
+  unlockModalImg.src = char.avatarSrc;
+  unlockModalName.textContent = char.name;
+  unlockModalDesc.textContent = char.desc || "شخصية مميزة في تجاكيل عفوية!";
+
+  if (isNewUnlock) {
+    if (unlockSparkle) unlockSparkle.textContent = "✨ مبروك شخصية جديدة! ✨";
+  } else {
+    if (unlockSparkle) unlockSparkle.textContent = "🪪 بطاقة تعريف الشخصية";
+  }
+
+  unlockModal.classList.remove("hidden");
+
+  if (char.voiceSrc) {
+    playCharacterVoice(char.voiceSrc);
+  }
+}
+
 // أزرار التنقل
 document.getElementById("btn-open-shop").onclick = () => {
+  stopBGM();
+  playClickSound();
   renderShop();
   showScreen(shopScreen);
 };
-document.getElementById("btn-close-shop").onclick = () =>
+document.getElementById("btn-close-shop").onclick = () => {
+  playClickSound();
   showScreen(menuScreen);
-document.getElementById("btn-start").onclick = () => startGame();
-document.getElementById("btn-restart").onclick = () => startGame();
-document.getElementById("btn-home").onclick = () => showScreen(menuScreen);
+};
+document.getElementById("btn-start").onclick = () => {
+  playClickSound();
+  startGame();
+};
+document.getElementById("btn-restart").onclick = () => {
+  playClickSound();
+  startGame();
+};
+document.getElementById("btn-home").onclick = () => {
+  stopBGM();
+  playClickSound();
+  showScreen(menuScreen);
+};
 document.getElementById("btn-shop-from-over").onclick = () => {
+  stopBGM();
+  playClickSound();
   renderShop();
   showScreen(shopScreen);
 };
 
-// إيقاف واستئناف
-document.getElementById("btn-pause").onclick = pauseGame;
-document.getElementById("btn-resume").onclick = startResumeCountdown;
+document.getElementById("btn-close-unlock").onclick = () => {
+  playClickSound();
+  unlockModal.classList.add("hidden");
+};
+
+// أزرار الإيقاف والاستئناف
+document.getElementById("btn-pause").onclick = () => {
+  playClickSound();
+  pauseGame();
+};
+document.getElementById("btn-resume").onclick = () => {
+  playClickSound();
+  startResumeCountdown();
+};
 document.getElementById("btn-pause-home").onclick = () => {
+  stopBGM();
+  playClickSound();
   isPaused = false;
   isPlaying = false;
   pauseModal.classList.add("hidden");
   showScreen(menuScreen);
 };
 
-// بناء المتجر
+// بناء المتجر: الضغط على أيقونة أي شخصية مملوكة يعرض معلوماتها
 function renderShop() {
   const grid = document.getElementById("characters-grid");
   grid.innerHTML = "";
@@ -161,8 +444,13 @@ function renderShop() {
       btnHtml = `<button class="game-btn btn-sm btn-green" onclick="buyChar('${char.id}')">شراء</button>`;
     }
 
+    // إضافة مؤشر النقر على الأيقونة للأشخاص المملوكين
+    const avatarCursorStyle = char.unlocked
+      ? 'style="cursor: pointer;" onclick="viewCharInfo(\'' + char.id + "')\""
+      : "";
+
     card.innerHTML = `
-      <div class="avatar-frame">
+      <div class="avatar-frame" ${avatarCursorStyle} title="${char.unlocked ? "عرض المعلومات والصوت" : ""}">
         <img src="${char.avatarSrc}" alt="${char.name}" class="avatar-img" onerror="this.src='player_run.png'">
       </div>
       <div class="card-title">${char.unlocked ? char.name : "؟؟؟"}</div>
@@ -173,7 +461,18 @@ function renderShop() {
   });
 }
 
+// فتح بطاقة المعلومات عند النقر على الأيقونة للشخصية المملوكة
+window.viewCharInfo = function (id) {
+  playClickSound();
+  const char = characters.find((c) => c.id === id);
+  if (char && char.unlocked) {
+    showCharacterInfoModal(char, false);
+  }
+};
+
+// اختيار شخصية للعب
 window.selectChar = function (id) {
+  playClickSound();
   const found = characters.find((c) => c.id === id);
   if (found && found.unlocked) {
     activeCharacter = found;
@@ -181,10 +480,16 @@ window.selectChar = function (id) {
     localStorage.setItem("my_game_active_char", activeCharacter.id);
     renderShop();
     showToast(`تم اختيار: ${activeCharacter.name}`);
+
+    if (activeCharacter.voiceSrc) {
+      playCharacterVoice(activeCharacter.voiceSrc);
+    }
   }
 };
 
+// شراء شخصية جديدة (يعرض نافذة التهنئة لأول مرة)
 window.buyChar = function (id) {
+  playClickSound();
   const char = characters.find((c) => c.id === id);
   if (!char) return;
 
@@ -200,7 +505,8 @@ window.buyChar = function (id) {
 
     updateUI();
     renderShop();
-    showToast(`مبروك! أصبحت شخصية ${char.name} مملوكة.`);
+
+    showCharacterInfoModal(char, true);
   } else {
     showToast(`تحتاج ${char.price - totalUC} UC إضافية للشراء!`);
   }
@@ -217,8 +523,7 @@ let score = 0;
 let collectedUC = 0;
 let frameCount = 0;
 
-const BASE_SPEED = 5.0;
-const MAX_SPEED = 9.5;
+const BASE_SPEED = 5.2;
 let gameSpeed = BASE_SPEED;
 
 let obstacleTimer = 0;
@@ -242,7 +547,6 @@ const player = {
 let obstacles = [];
 let coins = [];
 
-// دالة القياس المحمية (لا تفشل حتى لو كانت الشاشة مخفية)
 function resizeCanvas() {
   const container = document.getElementById("game-container");
   const w =
@@ -277,6 +581,7 @@ window.addEventListener("orientationchange", () =>
 );
 
 function jump() {
+  initAudio();
   if (player.isGrounded && isPlaying && !isPaused && !isCountingDown) {
     player.vy = player.jumpPower;
     player.isGrounded = false;
@@ -294,7 +599,6 @@ canvas.addEventListener("touchstart", (e) => {
 canvas.addEventListener("mousedown", jump);
 
 function startGame() {
-  // إظهار شاشة اللعبة أولاً حتى تأخذ أبعاداً صحيحة
   showScreen(gameScreen);
   resizeCanvas();
 
@@ -318,6 +622,9 @@ function startGame() {
 
   pauseModal.classList.add("hidden");
   countdownOverlay.classList.add("hidden");
+  unlockModal.classList.add("hidden");
+
+  startBGM();
   requestAnimationFrame(gameLoop);
 }
 
@@ -352,6 +659,8 @@ function startResumeCountdown() {
 function gameOver() {
   isPlaying = false;
   playerState = "crash";
+  stopBGM();
+  playGameOverSound();
   totalUC += collectedUC;
   if (score > highScore) {
     highScore = score;
@@ -398,7 +707,6 @@ function drawBarrel(ctx, x, y, width, height) {
   ctx.fillRect(x, y + Math.floor(height * 0.65), width, 4);
 }
 
-// رسم الـ UC الدوارة
 function drawRotatingCoin(ctx, x, y, radius, angle) {
   const scaleX = Math.cos(angle);
   if (Math.abs(scaleX) < 0.05) return;
@@ -447,9 +755,8 @@ function gameLoop() {
   currentScoreText.textContent = score;
   gameUCText.textContent = collectedUC;
 
-  gameSpeed = Math.min(MAX_SPEED, BASE_SPEED + score * 0.004);
+  gameSpeed = BASE_SPEED + Math.sqrt(score) * 0.16;
 
-  // فيزياء الحركة
   player.vy += player.gravity;
   player.y += player.vy;
 
@@ -464,7 +771,6 @@ function gameLoop() {
 
   const groundTop = logicalHeight - 45;
 
-  // توليد العوائق
   if (obstacleTimer >= nextObstacleInterval) {
     obstacleTimer = 0;
     const isBox = Math.random() > 0.5;
@@ -479,18 +785,13 @@ function gameLoop() {
       type: isBox ? "crate" : "barrel",
     });
 
-    const speedRatio = (gameSpeed - BASE_SPEED) / (MAX_SPEED - BASE_SPEED);
-    const minFrames = 55;
-    const maxFrames = Math.max(
-      minFrames + 15,
-      Math.floor(115 - speedRatio * 45),
-    );
-    nextObstacleInterval =
-      Math.floor(Math.random() * (maxFrames - minFrames + 1)) + minFrames;
+    const minSafeFrames = Math.max(38, Math.floor(280 / gameSpeed));
+    const variance = Math.max(12, Math.floor(200 / gameSpeed));
+    nextObstacleInterval = minSafeFrames + Math.floor(Math.random() * variance);
   }
 
-  // توليد العملات
-  if (frameCount % 85 === 0) {
+  const coinInterval = Math.max(45, Math.floor(450 / gameSpeed));
+  if (frameCount % coinInterval === 0) {
     coins.push({
       x: logicalWidth + 20,
       y: groundTop - 65 - Math.random() * 35,
@@ -499,7 +800,6 @@ function gameLoop() {
     });
   }
 
-  // حركة العوائق وفحص الاصطدام
   for (let i = obstacles.length - 1; i >= 0; i--) {
     let obs = obstacles[i];
     obs.x -= gameSpeed;
@@ -518,7 +818,6 @@ function gameLoop() {
     if (obs.x + obs.width < -20) obstacles.splice(i, 1);
   }
 
-  // جمع العملات
   for (let i = coins.length - 1; i >= 0; i--) {
     let c = coins[i];
     c.x -= gameSpeed;
@@ -530,6 +829,7 @@ function gameLoop() {
       player.y + player.height > c.y - c.radius
     ) {
       collectedUC++;
+      playCoinSound();
       coins.splice(i, 1);
       continue;
     }
@@ -537,16 +837,13 @@ function gameLoop() {
     if (c.x + c.radius < -20) coins.splice(i, 1);
   }
 
-  // مسح الشاشة
   ctx.clearRect(0, 0, logicalWidth, logicalHeight);
 
-  // رسم الأرضية
   ctx.fillStyle = "#c89558";
   ctx.fillRect(0, groundTop, logicalWidth, 45);
   ctx.fillStyle = "#a67238";
   ctx.fillRect(0, groundTop, logicalWidth, 6);
 
-  // رسم العوائق
   obstacles.forEach((obs) => {
     if (obs.type === "crate") {
       drawCrate(ctx, obs.x, obs.y, obs.width);
@@ -555,23 +852,20 @@ function gameLoop() {
     }
   });
 
-  // رسم العملات
   coins.forEach((c) => {
     c.angle += 0.08;
     drawRotatingCoin(ctx, c.x, c.y, c.radius, c.angle);
   });
 
-  // خطوات الركض
   let runOffsetY = 0;
   let runRotation = 0;
 
   if (player.isGrounded && playerState === "run") {
-    const runFreq = 0.35 + (gameSpeed - BASE_SPEED) * 0.03;
+    const runFreq = 0.32 + gameSpeed * 0.025;
     runOffsetY = Math.sin(frameCount * runFreq) * 3.5;
     runRotation = Math.cos(frameCount * runFreq) * 0.035;
   }
 
-  // رسم الشخصية
   const isImageReady =
     imgCurrentRun.complete && imgCurrentRun.naturalWidth !== 0;
 

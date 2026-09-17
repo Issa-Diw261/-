@@ -13,11 +13,10 @@ body {
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  min-height: 100dvh; /* يدعم الارتفاع الديناميكي للمتصفحات */
+  min-height: 100dvh;
   overflow: hidden;
 }
 
-/* حاوية اللعبة المتجاوبة بالكامل */
 #game-container {
   position: relative;
   width: 100vw;
@@ -56,7 +55,7 @@ body {
   display: none !important;
 }
 
-/* أزرار 3D مخصصة وتجاوبية */
+/* أزرار 3D مخصصة */
 .game-btn {
   border: none;
   outline: none;
@@ -98,8 +97,8 @@ body {
 }
 
 .btn-icon-only {
-  width: 44px;
-  height: 44px;
+  width: 42px;
+  height: 42px;
   border-radius: 12px;
 }
 
@@ -167,7 +166,7 @@ body {
   box-shadow: 0 1px 0 #bdc3c7;
 }
 
-/* شريط الرصيد والسكور (HUD) */
+/* شريط HUD */
 .top-bar,
 .hud {
   width: 100%;
@@ -177,7 +176,8 @@ body {
   z-index: 10;
 }
 
-.hud-left {
+.hud-left,
+.hud-controls {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -319,29 +319,29 @@ body {
   color: #1abc9c;
 }
 
-/* النوافذ العائمة */
+/* نوافذ التراكب */
 .overlay {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(10, 15, 25, 0.65);
-  backdrop-filter: blur(5px);
+  background: rgba(10, 15, 25, 0.7);
+  backdrop-filter: blur(6px);
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 30;
+  z-index: 40;
 }
 
 .modal-card {
   background: #ffffff;
   padding: 24px 20px;
-  border-radius: 20px;
+  border-radius: 22px;
   width: 88%;
   max-width: 320px;
   text-align: center;
-  box-shadow: 0 12px 25px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.35);
   border: 3px solid #f1f2f6;
 }
 
@@ -355,6 +355,67 @@ body {
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+
+/* بطاقة فتح الشخصية الأكبر والأكثر تميزاً */
+.unlock-card {
+  max-width: 340px;
+  border: 4px solid #f1c40f;
+  animation: popCard 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes popCard {
+  0% {
+    transform: scale(0.65);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.unlock-sparkle {
+  color: #d63031;
+  font-weight: 900;
+  font-size: 1.1rem;
+  margin-bottom: 12px;
+}
+
+.unlock-avatar-container {
+  width: 100px;
+  height: 100px;
+  margin: 0 auto 12px auto;
+  border-radius: 50%;
+  border: 4px solid #f1c40f;
+  overflow: hidden;
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+}
+
+.unlock-modal-avatar {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scale(1.15);
+}
+
+.unlock-title {
+  color: #2c3e50;
+  font-size: 1.45rem;
+  margin-bottom: 8px;
+  font-weight: 900;
+}
+
+.unlock-desc {
+  background: #f8fafc;
+  padding: 10px 14px;
+  border-radius: 12px;
+  color: #475569;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  margin-bottom: 18px;
+  border-right: 4px solid #3498db;
+  text-align: right;
 }
 
 .countdown-text {
@@ -423,7 +484,6 @@ body {
   z-index: 50;
 }
 
-/* الكانفاس المتجاوب */
 canvas {
   width: 100%;
   height: 100%;
