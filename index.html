@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, user-scalable=no"
+    />
+    <title>لعبة الأصدقاء Runner</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div id="game-container">
+      <!-- شاشة البداية الرئيسية -->
+      <div id="main-menu" class="screen">
+        <div class="top-bar">
+          <button id="btn-open-shop" class="game-btn btn-sm btn-yellow">
+            <svg class="btn-svg" viewBox="0 0 24 24">
+              <path
+                fill="currentColor"
+                d="M17 18a2 2 0 1 1 0 4 2 2 0 0 1 0-4m-10 0a2 2 0 1 1 0 4 2 2 0 0 1 0-4m-1.8-13h15.6l-1.5 7.5H7.7zM6 3l.8 2H21a1 1 0 0 1 .98 1.2l-2 10a1 1 0 0 1-.98.8H7a1 1 0 0 1-.98-.8L3.2 4H1V2h3.5z"
+              />
+            </svg>
+            <span>المتجر</span>
+          </button>
+          <div class="hud-pill uc-pill">
+            <span class="pill-badge">UC</span>
+            <span id="menu-uc-count" class="pill-value">0</span>
+          </div>
+        </div>
+
+        <div class="menu-hero">
+          <h1 class="game-title">RUNNER</h1>
+        </div>
+
+        <button id="btn-start" class="game-btn btn-lg btn-green">
+          <svg class="btn-svg-lg" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M8 5v14l11-7z" />
+          </svg>
+          <span>ابدأ اللعب</span>
+        </button>
+      </div>
+
+      <!-- شاشة اللعب -->
+      <div id="game-screen" class="screen hidden">
+        <div class="hud">
+          <div class="hud-left">
+            <div class="hud-pill score-pill">
+              <svg class="pill-svg" viewBox="0 0 24 24">
+                <path
+                  fill="#f1c40f"
+                  d="M19 5h-2V3H7v2H5c-1.1 0-2 .9-2 2v1c0 2.55 1.92 4.63 4.39 4.94A5.01 5.01 0 0 0 11 15.9V19H7v2h10v-2h-4v-3.1c1.8-.41 3.25-1.77 3.61-3.96C19.08 11.63 21 9.55 21 7V5c0-1.1-.9-2-2-2m-14 3V5h2v4.42C5.8 8.84 5 7.97 5 7m12 1.42V5h2v2c0 .97-.8 1.84-2 2.42z"
+                />
+              </svg>
+              <span id="current-score" class="pill-value">0</span>
+            </div>
+            <div class="hud-pill uc-pill">
+              <span class="pill-badge">UC</span>
+              <span id="game-uc-count" class="pill-value">0</span>
+            </div>
+          </div>
+          <button
+            id="btn-pause"
+            class="game-btn btn-icon-only btn-blue"
+            title="إيقاف مؤقت"
+          >
+            <svg class="btn-svg" viewBox="0 0 24 24">
+              <path fill="currentColor" d="M6 19h4V5H6zm8-14v14h4V5z" />
+            </svg>
+          </button>
+        </div>
+
+        <canvas id="gameCanvas"></canvas>
+
+        <!-- نافذة الإيقاف المؤقت -->
+        <div id="pause-modal" class="overlay hidden">
+          <div class="modal-card">
+            <h2>اللعبة متوقفة</h2>
+            <div class="modal-actions">
+              <button id="btn-resume" class="game-btn btn-md btn-green">
+                <svg class="btn-svg" viewBox="0 0 24 24">
+                  <path fill="currentColor" d="M8 5v14l11-7z" />
+                </svg>
+                <span>استئناف اللعب</span>
+              </button>
+              <button id="btn-pause-home" class="game-btn btn-md btn-red">
+                <svg class="btn-svg" viewBox="0 0 24 24">
+                  <path
+                    fill="currentColor"
+                    d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"
+                  />
+                </svg>
+                <span>القائمة الرئيسية</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- مؤقت الاستئناف -->
+        <div id="countdown-overlay" class="overlay hidden">
+          <div id="countdown-number" class="countdown-text">3</div>
+        </div>
+      </div>
+
+      <!-- شاشة المتجر -->
+      <div id="shop-screen" class="screen hidden">
+        <div class="top-bar">
+          <button id="btn-close-shop" class="game-btn btn-sm btn-gray">
+            <svg class="btn-svg" viewBox="0 0 24 24">
+              <path
+                fill="currentColor"
+                d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20z"
+              />
+            </svg>
+            <span>عودة</span>
+          </button>
+          <div class="hud-pill uc-pill">
+            <span class="pill-badge">UC</span>
+            <span id="shop-uc-count" class="pill-value">0</span>
+          </div>
+        </div>
+        <h2 class="section-title">متجر الشخصيات</h2>
+        <div id="characters-grid" class="grid">
+          <!-- توليد الشخصيات ديناميكياً -->
+        </div>
+      </div>
+
+      <!-- شاشة الخسارة -->
+      <div id="game-over-screen" class="screen hidden">
+        <div class="top-bar">
+          <div class="hud-pill highscore-pill">
+            <svg class="pill-svg" viewBox="0 0 24 24">
+              <path
+                fill="#f1c40f"
+                d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5m14 3a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-1h14v1z"
+              />
+            </svg>
+            <span id="best-score" class="pill-value">0</span>
+          </div>
+          <div class="hud-pill uc-pill">
+            <span class="pill-badge">UC</span>
+            <span id="over-uc-count" class="pill-value">0</span>
+          </div>
+        </div>
+
+        <div class="modal-card game-over-box">
+          <h1 class="game-over-title">انتهت اللعبة!</h1>
+          <div class="score-summary">
+            <span>النتيجة:</span>
+            <strong id="final-score">0</strong>
+          </div>
+
+          <div class="actions-row">
+            <button
+              id="btn-restart"
+              class="game-btn btn-circle btn-green"
+              title="إعادة اللعب"
+            >
+              <svg class="btn-svg-lg" viewBox="0 0 24 24">
+                <path
+                  fill="currentColor"
+                  d="M17.65 6.35A7.958 7.958 0 0 0 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0 1 12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"
+                />
+              </svg>
+            </button>
+            <button
+              id="btn-home"
+              class="game-btn btn-circle btn-blue"
+              title="القائمة الرئيسية"
+            >
+              <svg class="btn-svg-lg" viewBox="0 0 24 24">
+                <path
+                  fill="currentColor"
+                  d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"
+                />
+              </svg>
+            </button>
+            <button
+              id="btn-shop-from-over"
+              class="game-btn btn-circle btn-yellow"
+              title="المتجر"
+            >
+              <svg class="btn-svg-lg" viewBox="0 0 24 24">
+                <path
+                  fill="currentColor"
+                  d="M17 18a2 2 0 1 1 0 4 2 2 0 0 1 0-4m-10 0a2 2 0 1 1 0 4 2 2 0 0 1 0-4m-1.8-13h15.6l-1.5 7.5H7.7zM6 3l.8 2H21a1 1 0 0 1 .98 1.2l-2 10a1 1 0 0 1-.98.8H7a1 1 0 0 1-.98-.8L3.2 4H1V2h3.5z"
+                />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div id="toast" class="toast hidden"></div>
+    </div>
+
+    <script src="game.js"></script>
+  </body>
+</html>
