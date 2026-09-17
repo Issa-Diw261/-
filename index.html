@@ -14,31 +14,81 @@
       <!-- شاشة البداية الرئيسية -->
       <div id="main-menu" class="screen">
         <div class="top-bar">
-          <button id="btn-open-shop" class="game-btn btn-sm btn-yellow">
-            <svg class="btn-svg" viewBox="0 0 24 24">
-              <path
-                fill="currentColor"
-                d="M17 18a2 2 0 1 1 0 4 2 2 0 0 1 0-4m-10 0a2 2 0 1 1 0 4 2 2 0 0 1 0-4m-1.8-13h15.6l-1.5 7.5H7.7zM6 3l.8 2H21a1 1 0 0 1 .98 1.2l-2 10a1 1 0 0 1-.98.8H7a1 1 0 0 1-.98-.8L3.2 4H1V2h3.5z"
-              />
-            </svg>
-            <span>المتجر</span>
-          </button>
-          <div class="hud-pill uc-pill">
-            <span class="pill-badge">UC</span>
-            <span id="menu-uc-count" class="pill-value">0</span>
+          <div class="top-actions-left">
+            <button id="btn-open-shop" class="game-btn btn-sm btn-yellow">
+              <svg class="btn-svg" viewBox="0 0 24 24">
+                <path
+                  fill="currentColor"
+                  d="M17 18a2 2 0 1 1 0 4 2 2 0 0 1 0-4m-10 0a2 2 0 1 1 0 4 2 2 0 0 1 0-4m-1.8-13h15.6l-1.5 7.5H7.7zM6 3l.8 2H21a1 1 0 0 1 .98 1.2l-2 10a1 1 0 0 1-.98.8H7a1 1 0 0 1-.98-.8L3.2 4H1V2h3.5z"
+                />
+              </svg>
+              <span>المتجر</span>
+            </button>
+            <button
+              id="btn-open-achievements"
+              class="game-btn btn-icon-only btn-blue"
+              title="الإنجازات"
+            >
+              <svg class="btn-svg" viewBox="0 0 24 24">
+                <path
+                  fill="currentColor"
+                  d="M19 5h-2V3H7v2H5c-1.1 0-2 .9-2 2v1c0 2.55 1.92 4.63 4.39 4.94A5.01 5.01 0 0 0 11 15.9V19H7v2h10v-2h-4v-3.1c1.8-.41 3.25-1.77 3.61-3.96C19.08 11.63 21 9.55 21 7V5c0-1.1-.9-2-2-2m-14 3V5h2v4.42C5.8 8.84 5 7.97 5 7m12 1.42V5h2v2c0 .97-.8 1.84-2 2.42z"
+                />
+              </svg>
+            </button>
+          </div>
+
+          <div class="top-actions-right">
+            <div class="hud-pill uc-pill">
+              <span class="pill-badge">UC</span>
+              <span id="menu-uc-count" class="pill-value">0</span>
+              <button id="btn-open-buy-uc" class="btn-plus-uc" title="شحن UC">
+                +
+              </button>
+            </div>
+            <button
+              id="btn-open-settings"
+              class="game-btn btn-icon-only btn-gray"
+              title="الإعدادات"
+            >
+              <svg class="btn-svg" viewBox="0 0 24 24">
+                <path
+                  fill="currentColor"
+                  d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.488.488 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"
+                />
+              </svg>
+            </button>
           </div>
         </div>
 
         <div class="menu-hero">
           <h1 class="game-title">تجاكيل عفوية</h1>
+          <!-- ثلاث شخصيات عشوائية حرة عائمة -->
+          <div id="lobby-characters" class="lobby-characters-stage"></div>
         </div>
 
-        <button id="btn-start" class="game-btn btn-lg btn-green">
-          <svg class="btn-svg-lg" viewBox="0 0 24 24">
-            <path fill="currentColor" d="M8 5v14l11-7z" />
-          </svg>
-          <span>ابدأ اللعب</span>
-        </button>
+        <div class="menu-bottom-row">
+          <button id="btn-start" class="game-btn btn-lg btn-green">
+            <svg class="btn-svg-lg" viewBox="0 0 24 24">
+              <path fill="currentColor" d="M8 5v14l11-7z" />
+            </svg>
+            <span>ابدأ اللعب</span>
+          </button>
+          <!-- زر واتساب للتواصل المباشر -->
+          <a
+            id="btn-whatsapp"
+            class="game-btn btn-circle btn-whatsapp"
+            target="_blank"
+            title="تواصل مع المطور عبر واتساب"
+          >
+            <svg class="btn-svg-lg" viewBox="0 0 24 24">
+              <path
+                fill="currentColor"
+                d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0 0 12.04 2m.01 1.67c2.2 0 4.26.86 5.82 2.42a8.225 8.225 0 0 1 2.41 5.83c0 4.54-3.7 8.24-8.24 8.24-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.196 8.196 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.24-8.24m4.52 11.53c-.25-.13-1.47-.72-1.7-.81-.23-.09-.39-.13-.56.13-.17.25-.64.81-.79.97-.14.17-.29.19-.54.06-.25-.13-1.06-.39-2.02-1.25-.75-.67-1.26-1.5-1.41-1.75-.14-.25-.02-.39.11-.51.11-.11.25-.29.37-.44.13-.14.17-.25.25-.42.08-.17.04-.31-.02-.44-.06-.13-.56-1.34-.76-1.84-.2-.49-.4-.42-.56-.43h-.48c-.17 0-.44.06-.67.31-.23.25-.88.86-.88 2.1 0 1.23.9 2.43 1.03 2.6.13.17 1.77 2.7 4.28 3.79.6.26 1.07.41 1.43.53.6.19 1.15.16 1.58.1.48-.07 1.47-.6 1.68-1.18.21-.58.21-1.07.15-1.18-.06-.11-.23-.17-.48-.3z"
+              />
+            </svg>
+          </a>
+        </div>
       </div>
 
       <!-- شاشة اللعب -->
@@ -145,8 +195,123 @@
           </div>
         </div>
         <h2 class="section-title">متجر الشخصيات</h2>
-        <div id="characters-grid" class="grid">
-          <!-- توليد الشخصيات ديناميكياً -->
+        <div id="characters-grid" class="grid"></div>
+      </div>
+
+      <!-- شاشة الإنجازات (فارغة مؤقتاً) -->
+      <div id="achievements-screen" class="screen hidden">
+        <div class="top-bar">
+          <button id="btn-close-achievements" class="game-btn btn-sm btn-gray">
+            <svg class="btn-svg" viewBox="0 0 24 24">
+              <path
+                fill="currentColor"
+                d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20z"
+              />
+            </svg>
+            <span>عودة</span>
+          </button>
+          <h2 class="achievements-heading">الإنجازات</h2>
+        </div>
+        <div class="empty-state-box">
+          <div class="empty-state-icon">🏆</div>
+          <h3>قريباً جداً!</h3>
+          <p>
+            جاري تحضير قائمة مهام وتحديات حصرية للحصول على جوائز و UC إضافية.
+          </p>
+        </div>
+      </div>
+
+      <!-- نافذة الإعدادات المنبثقة (Popup) -->
+      <div id="settings-modal" class="overlay hidden">
+        <div class="modal-card modal-popup">
+          <div class="popup-header">
+            <h3>الإعدادات</h3>
+            <button id="btn-close-settings" class="btn-close-x" title="إغلاق">
+              &times;
+            </button>
+          </div>
+
+          <div class="settings-content">
+            <div class="setting-row">
+              <div class="setting-label">
+                <span>صوت اللعبة والموسيقى</span>
+                <span id="val-sfx-volume" class="slider-val">70%</span>
+              </div>
+              <input
+                type="range"
+                id="slider-sfx-volume"
+                min="0"
+                max="100"
+                value="70"
+                class="custom-slider"
+              />
+            </div>
+
+            <div class="setting-row">
+              <div class="setting-label">
+                <span>أصوات الشخصيات</span>
+                <span id="val-voice-volume" class="slider-val">100%</span>
+              </div>
+              <input
+                type="range"
+                id="slider-voice-volume"
+                min="0"
+                max="100"
+                value="100"
+                class="custom-slider"
+              />
+            </div>
+
+            <hr class="modal-divider" />
+
+            <div class="game-info-box">
+              <h4>حول اللعبة</h4>
+              <p>
+                لعبة عداء لا نهائي مخصصة وتفاعلية تعتمد على العفوية والمهارة
+                وتحدي الأصدقاء.
+              </p>
+              <div class="game-version-tag">الإصدار: v.1.0</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- نافذة شحن العملات المنبثقة (+) -->
+      <div id="buy-uc-modal" class="overlay hidden">
+        <div class="modal-card modal-popup buy-uc-popup">
+          <div class="popup-header">
+            <h3>شحن شدات UC</h3>
+            <button id="btn-close-buy-uc" class="btn-close-x" title="إغلاق">
+              &times;
+            </button>
+          </div>
+
+          <div class="bundles-grid">
+            <div class="bundle-card">
+              <div class="bundle-badge">100 UC</div>
+              <div class="bundle-price">10 S.P</div>
+              <button class="game-btn btn-sm btn-yellow btn-bundle">
+                شراء
+              </button>
+            </div>
+            <div class="bundle-card">
+              <div class="bundle-badge">500 UC</div>
+              <div class="bundle-price">25 S.P</div>
+              <button class="game-btn btn-sm btn-yellow btn-bundle">
+                شراء
+              </button>
+            </div>
+            <div class="bundle-card featured">
+              <div class="bundle-badge">1,000 UC</div>
+              <div class="bundle-price">40 S.P</div>
+              <button class="game-btn btn-sm btn-green btn-bundle">شراء</button>
+            </div>
+            <div class="bundle-card vip">
+              <div class="bundle-badge">5,000 UC</div>
+              <div class="bundle-price">100 S.P</div>
+              <button class="game-btn btn-sm btn-blue btn-bundle">شراء</button>
+            </div>
+          </div>
         </div>
       </div>
 

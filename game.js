@@ -1,11 +1,15 @@
 // ====================================================
-// لعبة تجاكيل عفوية - النسخة v.1.0 (إدارة الشخصيات والأصوات)
+// لعبة تجاكيل عفوية - النسخة v.1.0
 // ====================================================
 
-// --- محرك الصوت البرمجي (Web Audio API) المتوافق مع الهواتف ---
+// --- مستويات الصوت ومحرك Web Audio API ---
 const AudioContext = window.AudioContext || window.webkitAudioContext;
 let audioCtx = null;
 let isMuted = localStorage.getItem("my_game_muted") === "true";
+
+// مستويات الصوت المخزنة محلياً (0 إلى 1)
+let sfxVolume = parseFloat(localStorage.getItem("my_game_sfx_vol")) || 0.7;
+let voiceVolume = parseFloat(localStorage.getItem("my_game_voice_vol")) || 1.0;
 
 function initAudio() {
   if (!audioCtx) {
@@ -16,11 +20,10 @@ function initAudio() {
   }
 }
 
-// تفعيل الصوت عند أول تفاعل لمس للمستخدم
 window.addEventListener("touchstart", initAudio, { once: true });
 window.addEventListener("click", initAudio, { once: true });
 
-// مشغل صوت الشخصيات الخارجي
+// تشغيل صوت الشخصية مع التحكم بمستوى الصوت
 let currentCharacterAudio = null;
 function playCharacterVoice(voicePath) {
   if (isMuted || !voicePath) return;
@@ -31,6 +34,7 @@ function playCharacterVoice(voicePath) {
       currentCharacterAudio.currentTime = 0;
     }
     currentCharacterAudio = new Audio(voicePath);
+    currentCharacterAudio.volume = voiceVolume;
     currentCharacterAudio
       .play()
       .catch((e) => console.log("Audio playback prevented:", e));
@@ -61,7 +65,8 @@ const bgmNotes = [
 
 function playBgmTone(freq) {
   try {
-    if (isMuted || !audioCtx || audioCtx.state !== "running") return;
+    if (isMuted || !audioCtx || audioCtx.state !== "running" || sfxVolume <= 0)
+      return;
 
     const osc = audioCtx.createOscillator();
     const gainNode = audioCtx.createGain();
@@ -70,7 +75,8 @@ function playBgmTone(freq) {
     const now = audioCtx.currentTime;
 
     osc.frequency.setValueAtTime(freq, now);
-    gainNode.gain.setValueAtTime(0.035, now);
+    const targetGain = 0.05 * sfxVolume;
+    gainNode.gain.setValueAtTime(targetGain, now);
     gainNode.gain.exponentialRampToValueAtTime(0.0005, now + 0.22);
 
     osc.connect(gainNode);
@@ -103,7 +109,7 @@ function stopBGM() {
 
 function playClickSound() {
   try {
-    if (isMuted) return;
+    if (isMuted || sfxVolume <= 0) return;
     initAudio();
     if (!audioCtx) return;
 
@@ -116,7 +122,7 @@ function playClickSound() {
     osc.frequency.setValueAtTime(600, now);
     osc.frequency.exponentialRampToValueAtTime(220, now + 0.05);
 
-    gainNode.gain.setValueAtTime(0.2, now);
+    gainNode.gain.setValueAtTime(0.25 * sfxVolume, now);
     gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
 
     osc.connect(gainNode);
@@ -129,7 +135,7 @@ function playClickSound() {
 
 function playCoinSound() {
   try {
-    if (isMuted) return;
+    if (isMuted || sfxVolume <= 0) return;
     initAudio();
     if (!audioCtx) return;
 
@@ -142,7 +148,7 @@ function playCoinSound() {
     osc.frequency.setValueAtTime(987.77, now);
     osc.frequency.setValueAtTime(1318.51, now + 0.07);
 
-    gainNode.gain.setValueAtTime(0.2, now);
+    gainNode.gain.setValueAtTime(0.25 * sfxVolume, now);
     gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.32);
 
     osc.connect(gainNode);
@@ -155,7 +161,7 @@ function playCoinSound() {
 
 function playGameOverSound() {
   try {
-    if (isMuted) return;
+    if (isMuted || sfxVolume <= 0) return;
     initAudio();
     if (!audioCtx) return;
 
@@ -170,7 +176,7 @@ function playGameOverSound() {
       const noteTime = now + index * 0.12;
 
       osc.frequency.setValueAtTime(freq, noteTime);
-      gainNode.gain.setValueAtTime(0.18, noteTime);
+      gainNode.gain.setValueAtTime(0.2 * sfxVolume, noteTime);
       gainNode.gain.exponentialRampToValueAtTime(0.001, noteTime + 0.2);
 
       osc.connect(gainNode);
@@ -182,7 +188,7 @@ function playGameOverSound() {
   } catch (e) {}
 }
 
-// زر كتم الصوت
+// زر كتم الصوت في شاشة اللعب
 document.getElementById("btn-toggle-sound").onclick = () => {
   isMuted = !isMuted;
   localStorage.setItem("my_game_muted", isMuted);
@@ -191,17 +197,14 @@ document.getElementById("btn-toggle-sound").onclick = () => {
   if (isMuted) {
     stopBGM();
     if (currentCharacterAudio) currentCharacterAudio.pause();
-    showToast("تم كتم الصوت 🔇");
   } else {
     playClickSound();
     if (isPlaying && !isPaused && !isCountingDown) {
       startBGM();
     }
-    showToast("تم تشغيل الصوت 🔊");
   }
 };
 updateSoundButtonUI();
-
 // --- إدارة الشخصيات ---
 const characters = [
   {
@@ -312,11 +315,14 @@ let highScore = parseInt(localStorage.getItem("my_game_high_score")) || 0;
 const menuScreen = document.getElementById("main-menu");
 const gameScreen = document.getElementById("game-screen");
 const shopScreen = document.getElementById("shop-screen");
+const achievementsScreen = document.getElementById("achievements-screen");
 const gameOverScreen = document.getElementById("game-over-screen");
 const pauseModal = document.getElementById("pause-modal");
 const countdownOverlay = document.getElementById("countdown-overlay");
 const countdownNumber = document.getElementById("countdown-number");
 
+const settingsModal = document.getElementById("settings-modal");
+const buyUcModal = document.getElementById("buy-uc-modal");
 const unlockModal = document.getElementById("unlock-modal");
 const unlockModalImg = document.getElementById("unlock-modal-img");
 const unlockModalName = document.getElementById("unlock-modal-name");
@@ -348,32 +354,109 @@ function showToast(msg) {
 }
 
 function showScreen(screen) {
-  [menuScreen, gameScreen, shopScreen, gameOverScreen].forEach((s) =>
-    s.classList.add("hidden"),
-  );
+  [
+    menuScreen,
+    gameScreen,
+    shopScreen,
+    achievementsScreen,
+    gameOverScreen,
+  ].forEach((s) => s.classList.add("hidden"));
   screen.classList.remove("hidden");
 }
 
-// عرض نافذة تفاصيل الشخصية
-function showCharacterInfoModal(char, isNewUnlock = false) {
-  unlockModalImg.src = char.avatarSrc;
-  unlockModalName.textContent = char.name;
-  unlockModalDesc.textContent = char.desc || "شخصية مميزة في تجاكيل عفوية!";
+// عرض 3 شخصيات ركض عشوائية عائمة تهز رؤوسها بحرية في الشاشة الرئيسية
+function renderLobbyDancers() {
+  const stage = document.getElementById("lobby-characters");
+  if (!stage) return;
+  stage.innerHTML = "";
 
-  if (isNewUnlock) {
-    if (unlockSparkle) unlockSparkle.textContent = "✨ مبروك شخصية جديدة! ✨";
-  } else {
-    if (unlockSparkle) unlockSparkle.textContent = "🪪 بطاقة تعريف الشخصية";
-  }
+  const shuffled = [...characters].sort(() => 0.5 - Math.random());
+  const selected = shuffled.slice(0, 3);
 
-  unlockModal.classList.remove("hidden");
+  selected.forEach((char, index) => {
+    const dancer = document.createElement("div");
+    dancer.className = `lobby-dancer dancer-${index + 1}`;
+    dancer.title = char.name;
+    dancer.innerHTML = `<img src="${char.runSrc}" alt="${char.name}" onerror="this.src='player_run.png'">`;
+    stage.appendChild(dancer);
+  });
+}
+renderLobbyDancers();
 
-  if (char.voiceSrc) {
-    playCharacterVoice(char.voiceSrc);
-  }
+// تهيئة رابط واتساب للتواصل المباشر مع الرسالة المجهزة
+const myWhatsAppNumber = "963953544613";
+const defaultMessage = "عزيزي المطور أريد سؤالك عن لعبة تجكيلة بخصوص القسم ال";
+const whatsappUrl = `https://wa.me/${myWhatsAppNumber}?text=${encodeURIComponent(defaultMessage)}`;
+const btnWhatsApp = document.getElementById("btn-whatsapp");
+if (btnWhatsApp) {
+  btnWhatsApp.href = whatsappUrl;
 }
 
-// أزرار التنقل
+// عناصر التحكم بنافذة الإعدادات وسلايدر الصوت
+const sliderSfx = document.getElementById("slider-sfx-volume");
+const sliderVoice = document.getElementById("slider-voice-volume");
+const valSfx = document.getElementById("val-sfx-volume");
+const valVoice = document.getElementById("val-voice-volume");
+
+sliderSfx.value = Math.round(sfxVolume * 100);
+valSfx.textContent = `${sliderSfx.value}%`;
+sliderVoice.value = Math.round(voiceVolume * 100);
+valVoice.textContent = `${sliderVoice.value}%`;
+
+sliderSfx.oninput = (e) => {
+  const val = e.target.value;
+  valSfx.textContent = `${val}%`;
+  sfxVolume = val / 100;
+  localStorage.setItem("my_game_sfx_vol", sfxVolume);
+};
+
+sliderVoice.oninput = (e) => {
+  const val = e.target.value;
+  valVoice.textContent = `${val}%`;
+  voiceVolume = val / 100;
+  localStorage.setItem("my_game_voice_vol", voiceVolume);
+  if (currentCharacterAudio) currentCharacterAudio.volume = voiceVolume;
+};
+
+// فتح وإغلاق الإعدادات
+document.getElementById("btn-open-settings").onclick = () => {
+  playClickSound();
+  settingsModal.classList.remove("hidden");
+};
+document.getElementById("btn-close-settings").onclick = () => {
+  playClickSound();
+  settingsModal.classList.add("hidden");
+};
+
+// فتح وإغلاق نافذة شحن العملات (+)
+document.getElementById("btn-open-buy-uc").onclick = () => {
+  playClickSound();
+  buyUcModal.classList.remove("hidden");
+};
+document.getElementById("btn-close-buy-uc").onclick = () => {
+  playClickSound();
+  buyUcModal.classList.add("hidden");
+};
+
+// أزرار شراء الباقات
+document.querySelectorAll(".btn-bundle").forEach((btn) => {
+  btn.onclick = () => {
+    playClickSound();
+    showToast("سيتم تفعيل بوابات الدفع قريباً!");
+  };
+});
+
+// فتح وإغلاق شاشة الإنجازات
+document.getElementById("btn-open-achievements").onclick = () => {
+  playClickSound();
+  showScreen(achievementsScreen);
+};
+document.getElementById("btn-close-achievements").onclick = () => {
+  playClickSound();
+  showScreen(menuScreen);
+};
+
+// فتح وإغلاق المتجر
 document.getElementById("btn-open-shop").onclick = () => {
   stopBGM();
   playClickSound();
@@ -384,6 +467,8 @@ document.getElementById("btn-close-shop").onclick = () => {
   playClickSound();
   showScreen(menuScreen);
 };
+
+// أزرار بدء اللعب وإعادة المحاولة
 document.getElementById("btn-start").onclick = () => {
   playClickSound();
   startGame();
@@ -395,6 +480,7 @@ document.getElementById("btn-restart").onclick = () => {
 document.getElementById("btn-home").onclick = () => {
   stopBGM();
   playClickSound();
+  renderLobbyDancers();
   showScreen(menuScreen);
 };
 document.getElementById("btn-shop-from-over").onclick = () => {
@@ -409,7 +495,7 @@ document.getElementById("btn-close-unlock").onclick = () => {
   unlockModal.classList.add("hidden");
 };
 
-// أزرار الإيقاف والاستئناف
+// إيقاف واستئناف
 document.getElementById("btn-pause").onclick = () => {
   playClickSound();
   pauseGame();
@@ -424,6 +510,7 @@ document.getElementById("btn-pause-home").onclick = () => {
   isPaused = false;
   isPlaying = false;
   pauseModal.classList.add("hidden");
+  renderLobbyDancers();
   showScreen(menuScreen);
 };
 
@@ -465,6 +552,24 @@ function renderShop() {
     `;
     grid.appendChild(card);
   });
+}
+
+function showCharacterInfoModal(char, isNewUnlock = false) {
+  unlockModalImg.src = char.avatarSrc;
+  unlockModalName.textContent = char.name;
+  unlockModalDesc.textContent = char.desc || "شخصية مميزة في تجاكيل عفوية!";
+
+  if (isNewUnlock) {
+    if (unlockSparkle) unlockSparkle.textContent = "✨ مبروك شخصية جديدة! ✨";
+  } else {
+    if (unlockSparkle) unlockSparkle.textContent = "🪪 بطاقة تعريف الشخصية";
+  }
+
+  unlockModal.classList.remove("hidden");
+
+  if (char.voiceSrc) {
+    playCharacterVoice(char.voiceSrc);
+  }
 }
 
 window.viewCharInfo = function (id) {
@@ -674,7 +779,7 @@ function gameOver() {
   showScreen(gameOverScreen);
 }
 
-// رسم الصناديق والبراميل
+// رسم الصناديق والبراميل والعملات
 function drawCrate(ctx, x, y, size) {
   ctx.fillStyle = "#8B5A2B";
   ctx.fillRect(x, y, size, size);
@@ -747,7 +852,7 @@ function drawRotatingCoin(ctx, x, y, radius, angle) {
   ctx.restore();
 }
 
-// حلقة اللعبة الأساسية
+// حلقة اللعبة
 function gameLoop() {
   if (!isPlaying || isPaused || isCountingDown) return;
 
