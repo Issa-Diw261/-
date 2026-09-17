@@ -50,7 +50,6 @@ const characters = [
   },
 ];
 
-// استرجاع المشتريات المحفوظة
 let savedUnlocks = JSON.parse(localStorage.getItem("my_game_unlocked")) || [
   "me",
 ];
@@ -58,25 +57,22 @@ characters.forEach((c) => {
   if (savedUnlocks.includes(c.id)) c.unlocked = true;
 });
 
-// استرجاع الشخصية النشطة الحالية
 let savedActiveId = localStorage.getItem("my_game_active_char") || "me";
 let activeCharacter =
   characters.find((c) => c.id === savedActiveId && c.unlocked) || characters[0];
 
-// كائنات الصور المستخدمة في Canvas
 const imgCurrentRun = new Image();
 imgCurrentRun.src = activeCharacter.runSrc;
 
 const imgCrash = new Image();
 imgCrash.src = "player_crash.png";
 
-let playerState = "run"; // 'run' | 'jump' | 'crash'
+let playerState = "run";
 
-// --- إدارة التخزين والبيانات ---
 let totalUC = parseInt(localStorage.getItem("my_game_uc")) || 0;
 let highScore = parseInt(localStorage.getItem("my_game_high_score")) || 0;
 
-// --- عناصر واجهة المستخدم ---
+// عناصر الواجهة
 const menuScreen = document.getElementById("main-menu");
 const gameScreen = document.getElementById("game-screen");
 const shopScreen = document.getElementById("shop-screen");
@@ -141,7 +137,7 @@ document.getElementById("btn-pause-home").onclick = () => {
   showScreen(menuScreen);
 };
 
-// المتجر
+// بناء المتجر
 function renderShop() {
   const grid = document.getElementById("characters-grid");
   grid.innerHTML = "";
@@ -177,7 +173,6 @@ function renderShop() {
   });
 }
 
-// اختيار شخصية للعب
 window.selectChar = function (id) {
   const found = characters.find((c) => c.id === id);
   if (found && found.unlocked) {
@@ -189,7 +184,6 @@ window.selectChar = function (id) {
   }
 };
 
-// شراء شخصية جديدة
 window.buyChar = function (id) {
   const char = characters.find((c) => c.id === id);
   if (!char) return;
@@ -212,7 +206,7 @@ window.buyChar = function (id) {
   }
 };
 
-// --- محرك اللعبة (Canvas) ---
+// --- محرك الكانفاس (Canvas Engine) ---
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
@@ -248,14 +242,23 @@ const player = {
 let obstacles = [];
 let coins = [];
 
+// دالة القياس المحمية (لا تفشل حتى لو كانت الشاشة مخفية)
 function resizeCanvas() {
-  const rect = canvas.parentElement.getBoundingClientRect();
-  logicalWidth = rect.width || 360;
-  logicalHeight = rect.height || 640;
+  const container = document.getElementById("game-container");
+  const w =
+    gameScreen.clientWidth || container.clientWidth || window.innerWidth || 360;
+  const h =
+    gameScreen.clientHeight ||
+    container.clientHeight ||
+    window.innerHeight ||
+    640;
+
+  logicalWidth = Math.min(w, 480);
+  logicalHeight = h;
 
   const dpr = window.devicePixelRatio || 1;
-  canvas.width = logicalWidth * dpr;
-  canvas.height = logicalHeight * dpr;
+  canvas.width = Math.floor(logicalWidth * dpr);
+  canvas.height = Math.floor(logicalHeight * dpr);
 
   ctx.resetTransform();
   ctx.scale(dpr, dpr);
@@ -264,9 +267,14 @@ function resizeCanvas() {
   ctx.imageSmoothingQuality = "high";
 
   player.groundY = logicalHeight - 45 - player.height;
-  player.y = player.groundY;
+  if (player.isGrounded || !isPlaying) {
+    player.y = player.groundY;
+  }
 }
 window.addEventListener("resize", resizeCanvas);
+window.addEventListener("orientationchange", () =>
+  setTimeout(resizeCanvas, 150),
+);
 
 function jump() {
   if (player.isGrounded && isPlaying && !isPaused && !isCountingDown) {
@@ -286,7 +294,10 @@ canvas.addEventListener("touchstart", (e) => {
 canvas.addEventListener("mousedown", jump);
 
 function startGame() {
+  // إظهار شاشة اللعبة أولاً حتى تأخذ أبعاداً صحيحة
+  showScreen(gameScreen);
   resizeCanvas();
+
   isPlaying = true;
   isPaused = false;
   isCountingDown = false;
@@ -307,7 +318,6 @@ function startGame() {
 
   pauseModal.classList.add("hidden");
   countdownOverlay.classList.add("hidden");
-  showScreen(gameScreen);
   requestAnimationFrame(gameLoop);
 }
 
@@ -352,7 +362,7 @@ function gameOver() {
   showScreen(gameOverScreen);
 }
 
-// رسم الصندوق الخشبي
+// رسم الصناديق والبراميل
 function drawCrate(ctx, x, y, size) {
   ctx.fillStyle = "#8B5A2B";
   ctx.fillRect(x, y, size, size);
@@ -373,7 +383,6 @@ function drawCrate(ctx, x, y, size) {
   ctx.stroke();
 }
 
-// رسم البرميل الأخضر
 function drawBarrel(ctx, x, y, width, height) {
   ctx.fillStyle = "#2d5a27";
   ctx.fillRect(x, y, width, height);
@@ -389,7 +398,7 @@ function drawBarrel(ctx, x, y, width, height) {
   ctx.fillRect(x, y + Math.floor(height * 0.65), width, 4);
 }
 
-// رسم عملة الـ UC المعدنية الدوارة
+// رسم الـ UC الدوارة
 function drawRotatingCoin(ctx, x, y, radius, angle) {
   const scaleX = Math.cos(angle);
   if (Math.abs(scaleX) < 0.05) return;
@@ -455,7 +464,7 @@ function gameLoop() {
 
   const groundTop = logicalHeight - 45;
 
-  // توليد العوائق بمسافات مدروسة
+  // توليد العوائق
   if (obstacleTimer >= nextObstacleInterval) {
     obstacleTimer = 0;
     const isBox = Math.random() > 0.5;
@@ -490,7 +499,7 @@ function gameLoop() {
     });
   }
 
-  // حركة وفحص العوائق
+  // حركة العوائق وفحص الاصطدام
   for (let i = obstacles.length - 1; i >= 0; i--) {
     let obs = obstacles[i];
     obs.x -= gameSpeed;
@@ -528,7 +537,7 @@ function gameLoop() {
     if (c.x + c.radius < -20) coins.splice(i, 1);
   }
 
-  // رسم المشهد
+  // مسح الشاشة
   ctx.clearRect(0, 0, logicalWidth, logicalHeight);
 
   // رسم الأرضية
@@ -562,7 +571,7 @@ function gameLoop() {
     runRotation = Math.cos(frameCount * runFreq) * 0.035;
   }
 
-  // رسم الشخصية المفعلة حالياً
+  // رسم الشخصية
   const isImageReady =
     imgCurrentRun.complete && imgCurrentRun.naturalWidth !== 0;
 
